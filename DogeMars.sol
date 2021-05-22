@@ -1,14 +1,9 @@
 /**
   
-   #BEE
-   
-   #LIQ+#RFI+#SHIB+#DOGE = #BEE
-
    #DOGEMARS features:
    5% fee auto add to the liquidity pool to locked forever when selling
    5% fee auto distribute to all holders
    
-
  */
 
 pragma solidity ^0.6.12;
@@ -748,7 +743,8 @@ contract DogeMars is Context, IERC20, Ownable {
         
         // For BSC Mainnet
         // peggedDogeCoin = IERC20(0xbA2aE424d960c26247Dd6c32edC70B295c744C43);
-        // IUniswapV2Router02 _uniswapV2Router = IUniswapV2Router02(0x05fF2B0DB69458A0750badebc4f9e13aDd608C7F);
+        // IUniswapV2Router02 _uniswapV2Router = IUniswapV2Router02(0x05fF2B0DB69458A0750badebc4f9e13aDd608C7F); (v1)
+        // IUniswapV2Router02 _uniswapV2Router = IUniswapV2Router02(0x10ED43C718714eb63d5aA57B78B54704E256024E);
         
         // For BSC Testnet
         // peggedDogeCoin = IERC20(0x7CCe8cFa4cb9c2f3E5b48af48F93244Db809FD0E);
