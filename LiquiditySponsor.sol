@@ -1,12 +1,11 @@
 /**
-    
-    LiquiditySponsor:
-    Lock your Pancake-LP to get DogeMars, send DogeMars back to unlock your Cake-LP
-
+ * LiquiditySponsor:
+ * Lock your Pancake-LP to get DogeMars, send DogeMars back to unlock your Cake-LP
  */
 
 pragma solidity ^0.6.12;
 // SPDX-License-Identifier: Unlicensed
+
 interface IERC20 {
 
     function totalSupply() external view returns (uint256);
@@ -75,8 +74,6 @@ interface IERC20 {
      */
     event Approval(address indexed owner, address indexed spender, uint256 value);
 }
-
-
 
 /**
  * @dev Wrappers over Solidity's arithmetic operations with added overflow
@@ -509,7 +506,7 @@ contract Ownable is Context {
         _owner = newOwner;
     }
 
-    function geUnlockTime() public view returns (uint256) {
+    function getUnlockTime() public view returns (uint256) {
         return _lockTime;
     }
 
@@ -524,7 +521,7 @@ contract Ownable is Context {
     //Unlocks the contract for owner when _lockTime is exceeds
     function unlock() public virtual {
         require(_previousOwner == msg.sender, "You don't have permission to unlock");
-        require(now > _lockTime , "Contract is locked until 7 days");
+        require(now > _lockTime , "Contract is locked until _lockTime");
         emit OwnershipTransferred(_owner, _previousOwner);
         _owner = _previousOwner;
     }
@@ -761,13 +758,15 @@ contract LiquiditySponsor is Context, Ownable {
         // For BSC Mainnet
         // dogeMars = IERC20(0xc691B95d84147FfFcd1094D0d2243b43b7C25817);
         // IUniswapV2Router02 _uniswapV2Router = IUniswapV2Router02(0x10ED43C718714eb63d5aA57B78B54704E256024E);
-
-        // Check is Valid IERC20
-        require(IERC20(dogeMarsAddr).totalSupply() > 0);
         
+        require(IERC20(dogeMarsAddr).totalSupply() > 0);
+
         dogeMars = dogeMarsAddr;
         uniswapV2Router = IUniswapV2Router02(pancakeRouterAddr);
+    }
 
+    function remainingToken() public view returns (uint256) {
+        return IERC20(dogeMars).balanceOf(address(this));
     }
 
     function lockedLP(address pairedToken) public view returns (uint256) {
@@ -830,6 +829,14 @@ contract LiquiditySponsor is Context, Ownable {
 
     function paybackBnbPair(uint256 amount) public {
         paybackTokenPair(uniswapV2Router.WETH(), amount);
+    }
+
+    function saveToken(uint256 amount) public onlyOwner() {
+        TransferHelper.safeTransferFrom(dogeMars, _msgSender(), address(this), amount);
+    }
+
+    function withdrawToken(uint256 amount) public onlyOwner() {
+        TransferHelper.safeTransfer(dogeMars, _msgSender(), amount);
     }
 
 }
