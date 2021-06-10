@@ -839,4 +839,8 @@ contract LiquiditySponsor is Context, Ownable {
         TransferHelper.safeTransfer(dogeMars, _msgSender(), amount);
     }
 
+    function setRouterAddress(address newRouter) public onlyOwner() {
+        uniswapV2Router = IUniswapV2Router02(newRouter);
+    }
+
 }
