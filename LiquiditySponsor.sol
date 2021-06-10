@@ -1,6 +1,6 @@
 /**
  * LiquiditySponsor:
- * Lock your Pancake-LP to get DogeMars, send DogeMars back to unlock your Cake-LP
+ * Lock your Pancake-LP to get DogeMars, send DogeMars back to unlock your Pancake-LP
  */
 
 pragma solidity ^0.6.12;
