@@ -23,8 +23,8 @@ contract InvitationFund is Context, Ownable {
     // map from invitee to inviter
     mapping (address => address) private _inviter;
 
-    // map from invitee to whether rewarded for its inviter
-    mapping (address => bool) private _rewarded;
+    // map from invitee to rewarded value
+    mapping (address => uint256) private _rewarded;
 
     // rewarding ratio (percent)
     uint256 public rewardPercent = 10;
@@ -47,7 +47,7 @@ contract InvitationFund is Context, Ownable {
         return _inviter[invitee];
     }
 
-    function rewardedFor(address invitee) public view returns (bool) {
+    function rewardedFor(address invitee) public view returns (uint256) {
         return _rewarded[invitee];
     }
 
@@ -67,12 +67,12 @@ contract InvitationFund is Context, Ownable {
     function getReward(address invitee) public {
         address inviter = _inviter[invitee];
         require(inviter == _msgSender(), "Only the inviter can get reward!");
-        require(!_rewarded[invitee], "Already rewarded!");
+        require(_rewarded[invitee] == 0, "Already rewarded!");
         uint256 reward = calcReward(invitee);
         rewardedCnt = rewardedCnt.add(1);
         rewardedTotal = rewardedTotal.add(reward);
         TransferHelper.safeTransfer(dogeMars, inviter, reward);
-        _rewarded[invitee] = true;
+        _rewarded[invitee] = reward;
         emit Reward(invitee, inviter, reward);
     }
 
