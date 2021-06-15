@@ -13,6 +13,12 @@ import './libraries/Address.sol';
 import './libraries/TransferHelper.sol';
 import './libraries/Ownable.sol';
 
+interface IDogeMars is IERC20 {
+    
+    function peggedDogeCoin() external view returns (address);
+    
+}
+
 contract InvitationFund is Context, Ownable {
     using SafeMath for uint256;
     using Address for address;
@@ -48,21 +54,20 @@ contract InvitationFund is Context, Ownable {
     uint256 public rewardedTotalDogeMars;
     uint256 public rewardedTotalDogecoin;
 
-    constructor (address pancakeRouterAddr, address dogeMarsAddr, address dogecoinAddr) public {
+    constructor (address pancakeRouterAddr, address dogeMarsAddr) public {
         // For BSC Mainnet
-        // dogeMars = IERC20(0xc691B95d84147FfFcd1094D0d2243b43b7C25817);
-        
-        require(IERC20(dogeMarsAddr).totalSupply() > 0);
-        require(IERC20(dogecoinAddr).totalSupply() > 0);
+        // pancakeRouter = 0x10ED43C718714eb63d5aA57B78B54704E256024E;
+        // dogeMars = 0xc691B95d84147FfFcd1094D0d2243b43b7C25817;
 
+        address dogecoinAddr = IDogeMars(dogeMarsAddr).peggedDogeCoin();
+        
+        swapPath.push(dogeMarsAddr);
+        swapPath.push(IUniswapV2Router02(pancakeRouterAddr).WETH());
+        swapPath.push(dogecoinAddr);
+        
         pancakeRouter = pancakeRouterAddr;
         dogeMars = dogeMarsAddr;
         dogecoin = dogecoinAddr;
-        
-        swapPath.push(dogeMarsAddr);
-        swapPath.push(IUniswapV2Router02(pancakeRouter).WETH());
-        swapPath.push(dogecoinAddr);
-    
     }
 
     function calcRewardInDogeMars(address invitee) private view returns (uint256) {
