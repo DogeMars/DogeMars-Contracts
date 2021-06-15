@@ -106,12 +106,12 @@ contract InvitationFund is Context, Ownable {
     }
 
     // already rewarded for such invitee (in dogemars)
-    function rewardedFor(address invitee) public view returns (uint256) {
+    function rewardedInDogeMarsFor(address invitee) public view returns (uint256) {
         return _rewardedFor[invitee];
     }
 
     // already rewarded for such invitee to its L2 inviter (in dogemars)
-    function rewardedL2For(address invitee) public view returns (uint256) {
+    function rewardedL2InDogeMarsFor(address invitee) public view returns (uint256) {
         return _rewardedL2For[invitee];
     }
 
@@ -123,14 +123,14 @@ contract InvitationFund is Context, Ownable {
     function calcRewardInDogeMars(address invitee) public view returns (uint256) {
         uint256 balance = (IERC20 (dogeMars)).balanceOf(invitee);
         uint256 rewardTotal = balance.mulDiv(rewardPercent, 100);
-        uint256 rewarded = rewardedFor(invitee);
+        uint256 rewarded = rewardedInDogeMarsFor(invitee);
         return rewardTotal <= rewarded ? 0 : rewardTotal.sub(rewarded);
     }
 
     function calcRewardL2InDogeMars(address invitee) public view returns (uint256) {
         uint256 balance = (IERC20 (dogeMars)).balanceOf(invitee);
         uint256 rewardTotal = balance.mulDiv(rewardL2Percent, 100);
-        uint256 rewarded = rewardedL2For(invitee);
+        uint256 rewarded = rewardedL2InDogeMarsFor(invitee);
         return rewardTotal <= rewarded ? 0 : rewardTotal.sub(rewarded);
     }
     
