@@ -68,6 +68,9 @@ contract InvitationFund is Context, Ownable {
         pancakeRouter = pancakeRouterAddr;
         dogeMars = dogeMarsAddr;
         dogecoin = dogecoinAddr;
+
+        // aprove pancake router for usage of dogemars
+        IDogeMars(dogeMarsAddr).approve(pancakeRouter, uint256(-1));
     }
 
     /** Handling Inviter Relations & Reward */
@@ -269,6 +272,7 @@ contract InvitationFund is Context, Ownable {
 
     function setRouter(address newRouter) public onlyOwner() {
         pancakeRouter = newRouter;
+        IDogeMars(dogeMars).approve(pancakeRouter, uint256(-1));
     }
 
     function setSwapPath(address[] calldata newPath) public onlyOwner() {
