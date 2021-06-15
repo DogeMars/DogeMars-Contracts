@@ -48,7 +48,7 @@ contract InvitationFund is Context, Ownable {
 
     // rewarding ratio (percent)
     uint256 public rewardPercent = 10;
-    uint256 public rewardL2Percent = 5;
+    uint256 public rewardL2Percent = 1;
 
     uint256 public rewardedCnt;
     uint256 public rewardedTotalDogeMars;
@@ -68,52 +68,6 @@ contract InvitationFund is Context, Ownable {
         pancakeRouter = pancakeRouterAddr;
         dogeMars = dogeMarsAddr;
         dogecoin = dogecoinAddr;
-    }
-
-    function calcRewardInDogeMars(address invitee) private view returns (uint256) {
-        uint256 balance = (IERC20 (dogeMars)).balanceOf(invitee);
-        uint256 rewardTotal = balance.mulDiv(rewardPercent, 100);
-        uint256 rewarded = rewardedFor(invitee);
-        return rewardTotal <= rewarded ? 0 : rewardTotal.sub(rewarded);
-    }
-
-    function calcRewardL2InDogeMars(address invitee) private view returns (uint256) {
-        uint256 balance = (IERC20 (dogeMars)).balanceOf(invitee);
-        uint256 rewardTotal = balance.mulDiv(rewardL2Percent, 100);
-        uint256 rewarded = rewardedL2For(invitee);
-        return rewardTotal <= rewarded ? 0 : rewardTotal.sub(rewarded);
-    }
-    
-    function sumRewardInDogeMars(address inviter) private view returns (uint256) {
-        uint256 sum;
-        for (uint256 i=0; i<_invitees[inviter].length; i++) {
-            address son = _invitees[inviter][i];
-            uint256 r1 = calcRewardInDogeMars(son);
-            sum = sum.add(r1);
-            for (uint256 j=0; j<_invitees[son].length; j++) {
-                address grandson = _invitees[son][j];
-                uint256 r2 = calcRewardL2InDogeMars(grandson);
-                sum = sum.add(r2);
-            }
-        }
-        return sum;
-    }
-
-    function sumRewardInDogeMarsAndUpdate(address inviter) private returns (uint256) {
-        uint256 sum;
-        for (uint256 i=0; i<_invitees[inviter].length; i++) {
-            address son = _invitees[inviter][i];
-            uint256 r1 = calcRewardInDogeMars(son);
-            sum = sum.add(r1);
-            _rewardedFor[son] = _rewardedFor[son].add(r1);
-            for (uint256 j=0; j<_invitees[son].length; j++) {
-                address grandson = _invitees[son][j];
-                uint256 r2 = calcRewardL2InDogeMars(grandson);
-                sum = sum.add(r2);
-                _rewardedFor[grandson] = _rewardedFor[grandson].add(r2);
-            }
-        }
-        return sum;
     }
 
     /** Handling Inviter Relations & Reward */
@@ -161,6 +115,52 @@ contract InvitationFund is Context, Ownable {
     // rewarded dogecoin sent to the inviter
     function rewardedOf(address inviter) public view returns (uint256) {
         return _rewardedOf[inviter];
+    }
+
+    function calcRewardInDogeMars(address invitee) public view returns (uint256) {
+        uint256 balance = (IERC20 (dogeMars)).balanceOf(invitee);
+        uint256 rewardTotal = balance.mulDiv(rewardPercent, 100);
+        uint256 rewarded = rewardedFor(invitee);
+        return rewardTotal <= rewarded ? 0 : rewardTotal.sub(rewarded);
+    }
+
+    function calcRewardL2InDogeMars(address invitee) public view returns (uint256) {
+        uint256 balance = (IERC20 (dogeMars)).balanceOf(invitee);
+        uint256 rewardTotal = balance.mulDiv(rewardL2Percent, 100);
+        uint256 rewarded = rewardedL2For(invitee);
+        return rewardTotal <= rewarded ? 0 : rewardTotal.sub(rewarded);
+    }
+    
+    function sumRewardInDogeMars(address inviter) public view returns (uint256) {
+        uint256 sum;
+        for (uint256 i=0; i<_invitees[inviter].length; i++) {
+            address son = _invitees[inviter][i];
+            uint256 r1 = calcRewardInDogeMars(son);
+            sum = sum.add(r1);
+            for (uint256 j=0; j<_invitees[son].length; j++) {
+                address grandson = _invitees[son][j];
+                uint256 r2 = calcRewardL2InDogeMars(grandson);
+                sum = sum.add(r2);
+            }
+        }
+        return sum;
+    }
+
+    function sumRewardInDogeMarsAndUpdate(address inviter) private returns (uint256) {
+        uint256 sum;
+        for (uint256 i=0; i<_invitees[inviter].length; i++) {
+            address son = _invitees[inviter][i];
+            uint256 r1 = calcRewardInDogeMars(son);
+            sum = sum.add(r1);
+            _rewardedFor[son] = _rewardedFor[son].add(r1);
+            for (uint256 j=0; j<_invitees[son].length; j++) {
+                address grandson = _invitees[son][j];
+                uint256 r2 = calcRewardL2InDogeMars(grandson);
+                sum = sum.add(r2);
+                _rewardedFor[grandson] = _rewardedFor[grandson].add(r2);
+            }
+        }
+        return sum;
     }
 
     // estimate reward for such invitee address
