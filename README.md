@@ -13,4 +13,4 @@ In each trade, the transaction is taxed a 10% fee, which is split 2 ways.
 * DogeMars - implements DogeMars Protocol described above
 * BulkSender - can be used for airdrop
 * LiquiditySponsor - lock 48% DogeMars, which can only be used for adding liquidity
-* InvitationFund - reward those who invite new ones to DogeMars
+* InvitationFund - reward Dogecoin to those who invite new ones to DogeMars
