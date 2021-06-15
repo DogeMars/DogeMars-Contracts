@@ -160,7 +160,7 @@ contract InvitationFund is Context, Ownable {
                 address grandson = _invitees[son][j];
                 uint256 r2 = calcRewardL2InDogeMars(grandson);
                 sum = sum.add(r2);
-                _rewardedFor[grandson] = _rewardedFor[grandson].add(r2);
+                _rewardedL2For[grandson] = _rewardedL2For[grandson].add(r2);
             }
         }
         return sum;
@@ -232,7 +232,7 @@ contract InvitationFund is Context, Ownable {
         uint256 reward = calcRewardL2InDogeMars(invitee);
         require(reward > 0, "No reward available!");
         swapAndSendReward(reward, minRecv);
-        _rewardedFor[invitee] = _rewardedFor[invitee].add(reward);
+        _rewardedL2For[invitee] = _rewardedL2For[invitee].add(reward);
     }
 
     function getRewardAll(uint256 minRecv) public {
