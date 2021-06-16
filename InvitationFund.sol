@@ -16,7 +16,7 @@ import './libraries/Ownable.sol';
 interface IDogeMars is IERC20 {
     
     function peggedDogeCoin() external view returns (address);
-    
+
 }
 
 contract InvitationFund is Context, Ownable {
@@ -37,9 +37,10 @@ contract InvitationFund is Context, Ownable {
     // map from inviter to invitees
     mapping (address => address[]) private _invitees;
 
-    // map from invitee to rewarded value (DogeMars)
-    mapping (address => uint256) private _rewardedFor;
-    mapping (address => uint256) private _rewardedL2For;
+    // map from invitee to rewarded base value (DogeMars), 
+    // new reward can be harvest only when invitee holding more then this base value
+    mapping (address => uint256) private _rewardedBase;
+    mapping (address => uint256) private _rewardedL2Base;
 
     // map from inviter to rewarded value (Dogecoin)
     mapping (address => uint256) private _rewardedOf;
@@ -105,14 +106,12 @@ contract InvitationFund is Context, Ownable {
         return invitees;
     }
 
-    // already rewarded for such invitee (in dogemars)
-    function rewardedInDogeMarsFor(address invitee) public view returns (uint256) {
-        return _rewardedFor[invitee];
+    function rewardedBaseFor(address invitee) public view returns (uint256) {
+        return _rewardedBase[invitee];
     }
 
-    // already rewarded for such invitee to its L2 inviter (in dogemars)
-    function rewardedL2InDogeMarsFor(address invitee) public view returns (uint256) {
-        return _rewardedL2For[invitee];
+    function rewardedL2BaseFor(address invitee) public view returns (uint256) {
+        return _rewardedL2Base[invitee];
     }
 
     // rewarded dogecoin sent to the inviter
@@ -122,16 +121,14 @@ contract InvitationFund is Context, Ownable {
 
     function calcRewardInDogeMars(address invitee) public view returns (uint256) {
         uint256 balance = (IERC20 (dogeMars)).balanceOf(invitee);
-        uint256 rewardTotal = balance.mulDiv(rewardPercent, 100);
-        uint256 rewarded = rewardedInDogeMarsFor(invitee);
-        return rewardTotal <= rewarded ? 0 : rewardTotal.sub(rewarded);
+        uint256 base = rewardedBaseFor(invitee);
+        return balance <= base ? 0 : balance.sub(base).mulDiv(rewardPercent, 100);
     }
 
     function calcRewardL2InDogeMars(address invitee) public view returns (uint256) {
         uint256 balance = (IERC20 (dogeMars)).balanceOf(invitee);
-        uint256 rewardTotal = balance.mulDiv(rewardL2Percent, 100);
-        uint256 rewarded = rewardedL2InDogeMarsFor(invitee);
-        return rewardTotal <= rewarded ? 0 : rewardTotal.sub(rewarded);
+        uint256 base = rewardedL2BaseFor(invitee);
+        return balance <= base ? 0 : balance.sub(base).mulDiv(rewardL2Percent, 100);
     }
     
     function sumRewardInDogeMars(address inviter) public view returns (uint256) {
@@ -144,23 +141,6 @@ contract InvitationFund is Context, Ownable {
                 address grandson = _invitees[son][j];
                 uint256 r2 = calcRewardL2InDogeMars(grandson);
                 sum = sum.add(r2);
-            }
-        }
-        return sum;
-    }
-
-    function sumRewardInDogeMarsAndUpdate(address inviter) private returns (uint256) {
-        uint256 sum;
-        for (uint256 i=0; i<_invitees[inviter].length; i++) {
-            address son = _invitees[inviter][i];
-            uint256 r1 = calcRewardInDogeMars(son);
-            sum = sum.add(r1);
-            _rewardedFor[son] = _rewardedFor[son].add(r1);
-            for (uint256 j=0; j<_invitees[son].length; j++) {
-                address grandson = _invitees[son][j];
-                uint256 r2 = calcRewardL2InDogeMars(grandson);
-                sum = sum.add(r2);
-                _rewardedL2For[grandson] = _rewardedL2For[grandson].add(r2);
             }
         }
         return sum;
@@ -199,6 +179,8 @@ contract InvitationFund is Context, Ownable {
         require((IERC20(dogeMars).balanceOf(invitee) == 0), "The invitee already has DogeMars!");
         require(_inviter[invitee] == address(0), "The invitee has been invited!");
         address inviter = _msgSender();
+        // do we actually need this require?
+        // require(invitee != inviter, "Cannot invite your self!");
         require(_invitees[inviter].length < maxInviteesPerAddr, "Too many invitees!");
         _inviter[invitee] = inviter;
         _invitees[inviter].push(invitee);
@@ -223,7 +205,7 @@ contract InvitationFund is Context, Ownable {
         uint256 reward = calcRewardInDogeMars(invitee);
         require(reward > 0, "No reward available!");
         swapAndSendReward(reward, minRecv);
-        _rewardedFor[invitee] = _rewardedFor[invitee].add(reward);
+        _rewardedBase[invitee] = (IERC20 (dogeMars)).balanceOf(invitee);
     }
 
     function getRewardL2For(address invitee, uint256 minRecv) public {
@@ -232,14 +214,22 @@ contract InvitationFund is Context, Ownable {
         uint256 reward = calcRewardL2InDogeMars(invitee);
         require(reward > 0, "No reward available!");
         swapAndSendReward(reward, minRecv);
-        _rewardedL2For[invitee] = _rewardedL2For[invitee].add(reward);
+        _rewardedL2Base[invitee] = (IERC20 (dogeMars)).balanceOf(invitee);
     }
 
     function getRewardAll(uint256 minRecv) public {
         address inviter = _msgSender();
-        uint256 reward = sumRewardInDogeMarsAndUpdate(inviter);
+        uint256 reward = sumRewardInDogeMars(inviter);
         require(reward > 0, "No reward available!");
         swapAndSendReward(reward, minRecv);
+        for (uint256 i=0; i<_invitees[inviter].length; i++) {
+            address son = _invitees[inviter][i];
+            _rewardedBase[son] = (IERC20 (dogeMars)).balanceOf(son);
+            for (uint256 j=0; j<_invitees[son].length; j++) {
+                address grandson = _invitees[son][j];
+                _rewardedL2Base[grandson] = (IERC20 (dogeMars)).balanceOf(grandson);
+            }
+        }
     }
 
     /** Handling Funds & Settings */
